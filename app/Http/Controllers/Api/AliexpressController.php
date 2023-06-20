@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 //use Aliexpress\IopClient;
+use DOMDocument;
 
 class AliexpressController extends Controller
 {
@@ -17,6 +18,8 @@ class AliexpressController extends Controller
         } elseif ($type == 2) {
             $newUrl = 'https://s.click.aliexpress.com/e/'. $url;
         }
+
+        $data = $this->getProductInfo($newUrl);
 
         // include(app_path().'/Services/Aliexpress/iop/IopClient.php');
         // include(app_path().'/Services/Aliexpress/iop/IopRequest.php');
@@ -36,7 +39,62 @@ class AliexpressController extends Controller
         $response = json_decode($c->execute($request));
         $newLink = $response->aliexpress_affiliate_link_generate_response->resp_result->result->promotion_links->promotion_link;
         
-        return response()->json(['link' => $newLink]);
-        //return response()->json(['link' => $url . ' - ' . $type]);
+        return response()->json([
+            'link' => $newLink,
+            'title' => $data['title'],
+            'description' => $data['description'],
+            'image' => $data['image']
+        ]);
+        //return response()->json(['link' => $url . ' - ' . $c->execute($request)]);
+        //return response()->json(['link' => $title]);
+    }
+
+    public function getProductInfo($url)
+    {
+        // Extract HTML using curl 
+        $ch = curl_init(); 
+        curl_setopt($ch, CURLOPT_HEADER, 0); 
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); 
+        curl_setopt($ch, CURLOPT_URL, $url); 
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1); 
+
+        $data = curl_exec($ch); 
+        curl_close($ch); 
+
+        // Load HTML to DOM object 
+        $dom = new DOMDocument(); 
+        @$dom->loadHTML($data); 
+
+        // Parse DOM to get Title data 
+        $nodes = $dom->getElementsByTagName('title'); 
+        $title = $nodes->item(0)->nodeValue;
+
+        // Parse DOM to get meta data 
+        $metas = $dom->getElementsByTagName('meta'); 
+
+        $description = $keywords = ''; 
+        for($i=0; $i<$metas->length; $i++){ 
+            $meta = $metas->item($i); 
+
+            if($meta->getAttribute('name') == 'description'){ 
+                $description = $meta->getAttribute('content'); 
+            } 
+
+            if($meta->getAttribute('name') == 'keywords'){ 
+                $keywords = $meta->getAttribute('content'); 
+            }
+        
+            if($meta->getAttribute('property') == 'og:image'){ 
+                $image = $meta->getAttribute('content'); 
+            } 
+        } 
+
+        $data = [
+            'title' => $title,
+            'description' => $description,
+            'keywords' => $keywords,
+            'image' => $image
+        ];
+        return $data;
     }
 }
