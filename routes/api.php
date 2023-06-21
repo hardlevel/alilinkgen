@@ -19,5 +19,5 @@ use App\Http\Controllers\Api\AliexpressController;
 //     return $request->user();
 // });
 
-Route::get('/ali/{url}/{type}', [AliexpressController::class, 'index']);
+Route::get('/ali/{url}/{type?}', [AliexpressController::class, 'index']);
 Route::get('/product/{url}', [AliexpressController::class, 'getProductInfo']);
