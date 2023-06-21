@@ -98,4 +98,9 @@ class AliexpressController extends Controller
         ];
         return $data;
     }
+
+    public function teste()
+    {
+        return response()->json(['pinto' => 'rola']);
+    }
 }
