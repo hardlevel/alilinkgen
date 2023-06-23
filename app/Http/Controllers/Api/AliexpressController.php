@@ -25,7 +25,7 @@ class AliexpressController extends Controller
         $response = json_decode($c->execute($request));
         $newLink = $response->aliexpress_affiliate_link_generate_response->resp_result->result->promotion_links->promotion_link;
         
-        $productInfo = $this->getProductInfo($id)->original;
+        $productInfo = $this->getProductInfo($productId)->original;
 
         // return response()->json([
         //     'link' => $newLink,
