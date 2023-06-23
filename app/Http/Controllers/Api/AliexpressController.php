@@ -11,7 +11,7 @@ class AliexpressController extends Controller
 {
     public function index(Request $request, $id)
     {
-        $productId = $request->id;
+        $productId = $id;
         $url = "https://pt.aliexpress.com/item/$productId.html";       
 
         include(app_path().'/Services/Aliexpress/IopSdk.php');
