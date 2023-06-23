@@ -36,6 +36,7 @@ class AliexpressController extends Controller
         //return response()->json(['link' => $id . ' - ' . $c->execute($request)]);
         //return response()->json(['link' => $title]);
         return response()->json([
+            'original_id' => $productId,
             'link' => $newLink[0]->promotion_link,
             'title' => $productInfo['title'],
             'image' => $productInfo['image'],
