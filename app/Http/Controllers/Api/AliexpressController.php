@@ -11,8 +11,8 @@ class AliexpressController extends Controller
 {
     public function index(Request $request, $id)
     {
-        $id = $request->id;
-        $url = "https://pt.aliexpress.com/item/$id.html";       
+        $productId = $request->id;
+        $url = "https://pt.aliexpress.com/item/$productId.html";       
 
         include(app_path().'/Services/Aliexpress/IopSdk.php');
 
@@ -49,12 +49,12 @@ class AliexpressController extends Controller
         //$id = $request->id;
         
         //include(app_path().'/Services/Aliexpress/IopSdk.php');
-
+        $productId = $id;
         $c = new \IopClient('https://api-sg.aliexpress.com/sync', $_ENV['ALI_APPKEY'], $_ENV['ALI_SECRET']);
         $request = new \IopRequest('aliexpress.affiliate.productdetail.get');
         $request->addApiParam('app_signature','aaaaa');
         $request->addApiParam('fields','commission_rate,sale_price');
-        $request->addApiParam('product_ids', $id);
+        $request->addApiParam('product_ids', $productId);
         $request->addApiParam('target_currency','BRL');
         $request->addApiParam('target_language','PT');
         $request->addApiParam('tracking_id','hardlevel');
