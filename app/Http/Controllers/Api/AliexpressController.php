@@ -9,9 +9,10 @@ use DOMDocument;
 
 class AliexpressController extends Controller
 {
-    public function index(Request $request, $url)
+    public function index(Request $request, $id)
     {
-        $url = $request->url;
+        $id = $request->id;
+        $url = "https://pt.aliexpress.com/item/$id.html";
         // $type = $request->type;
         // if ($type == 1){
         //     $newUrl = 'https://pt.aliexpress.com/item/'. $url .'.html';
@@ -20,7 +21,7 @@ class AliexpressController extends Controller
         // }
 
         //$data = $this->getProductInfo($newUrl);
-        $data = $this->getProductInfo($url);
+        //$data = $this->getProductInfo($url);
 
         // include(app_path().'/Services/Aliexpress/iop/IopClient.php');
         // include(app_path().'/Services/Aliexpress/iop/IopRequest.php');
@@ -34,73 +35,87 @@ class AliexpressController extends Controller
         $request = new \IopRequest('aliexpress.affiliate.link.generate');
         $request->addApiParam('app_signature', 'asdasdas');
         $request->addApiParam('promotion_link_type', '0');
-        //$request->addApiParam('source_values', 'https://pt.aliexpress.com/item/1005004698856770.html?spm=a2g0o.productlist.main.1.35ec35cc810UVF&algo_pvid=c81f3d4c-84c5-4697-b724-5e1119a85416&algo_exp_id=c81f3d4c-84c5-4697-b724-5e1119a85416-0&pdp_npi=3%40dis%21BRL%211551.56%21209.32%21%21%21%21%21%40211beca116869232656221380d07ea%2112000033874163478%21sea%21BR%21160017240&curPageLogUid=fFtV0W5AFknu');
         $request->addApiParam('source_values', $url);
         $request->addApiParam('tracking_id', $_ENV['ALI_TRACKID']);
         $response = json_decode($c->execute($request));
         $newLink = $response->aliexpress_affiliate_link_generate_response->resp_result->result->promotion_links->promotion_link;
         
-        return response()->json([
-            'link' => $newLink,
-            'title' => $data['title'],
-            'description' => $data['description'],
-            'image' => $data['image']
-        ]);
-        //return response()->json(['link' => $url . ' - ' . $c->execute($request)]);
+        // return response()->json([
+        //     'link' => $newLink,
+        //     'title' => $data['title'],
+        //     'image' => $data['image']
+        // ]);
+
+        //return response()->json(['link' => $id . ' - ' . $c->execute($request)]);
         //return response()->json(['link' => $title]);
+        return response()->json(['link' => $newLink]);
     }
 
     public function getProductInfo($url)
     {
-        // Extract HTML using curl 
-        $ch = curl_init(); 
-        curl_setopt($ch, CURLOPT_HEADER, 0); 
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); 
-        curl_setopt($ch, CURLOPT_URL, $url); 
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1); 
+        //$url2 = "https://pt.aliexpress.com/item/$url.html";
+        $maxAttempts = 5; // Número máximo de tentativas
+        $attempt = 1;
+        $html = '';
+        $title = '';
+        $ogImage = '';
 
-        $data = curl_exec($ch); 
-        curl_close($ch); 
+        while ($attempt <= $maxAttempts && empty($title)) {
+            // Inicializa a sessão cURL
+            $curl = curl_init($url);
 
-        // Load HTML to DOM object 
-        $dom = new DOMDocument(); 
-        @$dom->loadHTML($data); 
+            // Configura as opções do cURL
+            curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
 
-        // Parse DOM to get Title data 
-        $nodes = $dom->getElementsByTagName('title'); 
-        $title = $nodes->item(0)->nodeValue;
+            // Executa a solicitação HTTP
+            $html = curl_exec($curl);
 
-        // Parse DOM to get meta data 
-        $metas = $dom->getElementsByTagName('meta'); 
+            // Verifica se a solicitação foi bem-sucedida
+            $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+            if ($httpCode === 200) {
+                // Imprime o conteúdo HTML para depuração
+                //echo $html;
 
-        $description = $keywords = ''; 
-        for($i=0; $i<$metas->length; $i++){ 
-            $meta = $metas->item($i); 
+                // Analisa o HTML usando a biblioteca DOMDocument
+                $dom = new DOMDocument();
+                @$dom->loadHTML($html);
 
-            if($meta->getAttribute('name') == 'description'){ 
-                $description = $meta->getAttribute('content'); 
-            } 
+                // Obtém o título da página a partir da tag <h1> ou <h2>
+                $titleTag = $dom->getElementsByTagName('title');
+                if ($titleTag->length > 0) {
+                    $title = $titleTag->item(0)->nodeValue;
+                }
 
-            if($meta->getAttribute('name') == 'keywords'){ 
-                $keywords = $meta->getAttribute('content'); 
+                $metaTags = $dom->getElementsByTagName('meta');
+                foreach ($metaTags as $metaTag) {
+                    if ($metaTag->getAttribute('property') === 'og:image') {
+                        $ogImage = $metaTag->getAttribute('content');
+                        break;
+                    }
+                }
             }
-        
-            if($meta->getAttribute('property') == 'og:image'){ 
-                $image = $meta->getAttribute('content'); 
-            } 
-        } 
 
-        $data = [
-            'title' => $title,
-            'description' => $description,
-            'keywords' => $keywords,
-            'image' => $image
-        ];
-        return $data;
+            // Fecha a sessão cURL
+            curl_close($curl);
+
+            $attempt++;
+        }
+
+        // Exibe o título e a imagem para depuração
+        // echo 'Título: ' . $title . '<br>';
+        // echo 'Imagem: ' . $ogImage . '<br>';
+
+        // $data = [
+        //     'title' => $title,
+        //     'image' => $ogImage
+        // ];
+
+        //return $data;
+        return response()->json(['title' => $title,'image' => $ogImage]);
     }
 
     public function teste()
     {
-        return response()->json(['pinto' => 'rola']);
+        return response()->json(['ping' => 'pong']);
     }
 }
