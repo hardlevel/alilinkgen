@@ -12,22 +12,7 @@ class AliexpressController extends Controller
     public function index(Request $request, $id)
     {
         $id = $request->id;
-        $url = "https://pt.aliexpress.com/item/$id.html";
-        // $type = $request->type;
-        // if ($type == 1){
-        //     $newUrl = 'https://pt.aliexpress.com/item/'. $url .'.html';
-        // } elseif ($type == 2) {
-        //     $newUrl = 'https://s.click.aliexpress.com/e/'. $url;
-        // }
-
-        //$data = $this->getProductInfo($newUrl);
-        //$data = $this->getProductInfo($url);
-
-        // include(app_path().'/Services/Aliexpress/iop/IopClient.php');
-        // include(app_path().'/Services/Aliexpress/iop/IopRequest.php');
-        // include(app_path().'/Services/Aliexpress/iop/Constants.php');
-        // include(app_path().'/Services/Aliexpress/iop/IopLogger.php');
-        // include(app_path().'/Services/Aliexpress/iop/UrlConstants.php');
+        $url = "https://pt.aliexpress.com/item/$id.html";       
 
         include(app_path().'/Services/Aliexpress/IopSdk.php');
 
