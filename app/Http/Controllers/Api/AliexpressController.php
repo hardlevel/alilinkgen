@@ -36,67 +36,32 @@ class AliexpressController extends Controller
         return response()->json(['link' => $newLink]);
     }
 
-    public function getProductInfo($url)
+    public function getProductInfo(Request $request, $id)
     {
-        //$url2 = "https://pt.aliexpress.com/item/$url.html";
-        $maxAttempts = 5; // Número máximo de tentativas
-        $attempt = 1;
-        $html = '';
-        $title = '';
-        $ogImage = '';
+        $id = $request->id;
+        
+        include(app_path().'/Services/Aliexpress/IopSdk.php');
 
-        while ($attempt <= $maxAttempts && empty($title)) {
-            // Inicializa a sessão cURL
-            $curl = curl_init($url);
+        $c = new \IopClient('https://api-sg.aliexpress.com/sync', $_ENV['ALI_APPKEY'], $_ENV['ALI_SECRET']);
+        $request = new \IopRequest('aliexpress.affiliate.productdetail.get');
+        $request->addApiParam('app_signature','aaaaa');
+        $request->addApiParam('fields','commission_rate,sale_price');
+        $request->addApiParam('product_ids', $id);
+        $request->addApiParam('target_currency','BRL');
+        $request->addApiParam('target_language','PT');
+        $request->addApiParam('tracking_id','hardlevel');
+        $request->addApiParam('country','BR');
+        //var_dump($c->execute($request));
+        $response =  json_decode($c->execute($request));
+        $data = $response->aliexpress_affiliate_productdetail_get_response->resp_result->result->products->product[0];
 
-            // Configura as opções do cURL
-            curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-
-            // Executa a solicitação HTTP
-            $html = curl_exec($curl);
-
-            // Verifica se a solicitação foi bem-sucedida
-            $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-            if ($httpCode === 200) {
-                // Imprime o conteúdo HTML para depuração
-                //echo $html;
-
-                // Analisa o HTML usando a biblioteca DOMDocument
-                $dom = new DOMDocument();
-                @$dom->loadHTML($html);
-
-                // Obtém o título da página a partir da tag <h1> ou <h2>
-                $titleTag = $dom->getElementsByTagName('title');
-                if ($titleTag->length > 0) {
-                    $title = $titleTag->item(0)->nodeValue;
-                }
-
-                $metaTags = $dom->getElementsByTagName('meta');
-                foreach ($metaTags as $metaTag) {
-                    if ($metaTag->getAttribute('property') === 'og:image') {
-                        $ogImage = $metaTag->getAttribute('content');
-                        break;
-                    }
-                }
-            }
-
-            // Fecha a sessão cURL
-            curl_close($curl);
-
-            $attempt++;
-        }
-
-        // Exibe o título e a imagem para depuração
-        // echo 'Título: ' . $title . '<br>';
-        // echo 'Imagem: ' . $ogImage . '<br>';
-
-        // $data = [
-        //     'title' => $title,
-        //     'image' => $ogImage
-        // ];
-
-        //return $data;
-        return response()->json(['title' => $title,'image' => $ogImage]);
+        return response()->json([
+            'title' => $data->product_title,
+            'image' => $data->product_main_image_url,
+            'discount' => $data->discount,
+            'price' => $data->target_sale_price
+        ]);
+        //return response()->json(['teste' => $id]);
     }
 
     public function teste()
