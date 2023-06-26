@@ -23,26 +23,25 @@ class AliexpressController extends Controller
         $request->addApiParam('source_values', $url);
         $request->addApiParam('tracking_id', $_ENV['ALI_TRACKID']);
         $response = json_decode($c->execute($request));
-        $newLink = $response->aliexpress_affiliate_link_generate_response->resp_result->result->promotion_links->promotion_link;
+        $response_result = $response->aliexpress_affiliate_link_generate_response->resp_result->result->promotion_links->promotion_link;
         
-        $productInfo = $this->getProductInfo($productId)->original;
-
-        // return response()->json([
-        //     'link' => $newLink,
-        //     'title' => $data['title'],
-        //     'image' => $data['image']
-        // ]);
-
-        //return response()->json(['link' => $id . ' - ' . $c->execute($request)]);
-        //return response()->json(['link' => $title]);
-        return response()->json([
-            'original_id' => $productId,
-            'link' => $newLink[0]->promotion_link,
-            'title' => $productInfo['title'],
-            'image' => $productInfo['image'],
-            'price' => $productInfo['price'],
-            'discount' => $productInfo['discount'],
-        ]);
+        if (isset($response_result[0]->promotion_link)) {
+            $newLink = $response_result[0]->promotion_link;
+            $productInfo = $this->getProductInfo($productId)->original;
+    
+            return response()->json([
+                'original_id' => $productId,
+                'link' => $newLink,
+                'title' => $productInfo['title'],
+                'image' => $productInfo['image'],
+                'price' => $productInfo['price'],
+                'discount' => $productInfo['discount'],
+            ]);
+        } else {
+            return response()->json([
+                'erro'=>'Esse produto não tem suporte a link de afiliado',
+            ]);
+        }
     }
 
     public function getProductInfo($id)
