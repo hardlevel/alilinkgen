@@ -36,6 +36,8 @@ class AliexpressController extends Controller
                 'image' => $productInfo['image'],
                 'price' => $productInfo['price'],
                 'discount' => $productInfo['discount'],
+                'category1' => $productInfo['category1'],
+                'category2' => $productInfo['category2']
             ]);
         } else {
             return response()->json([
