@@ -67,7 +67,9 @@ class AliexpressController extends Controller
             'title' => $data->product_title,
             'image' => $data->product_main_image_url,
             'discount' => $data->discount,
-            'price' => $data->target_sale_price
+            'price' => $data->target_sale_price,
+            'category1' => $data->first_level_category_name,
+            'category2' => $data->second_level_category_name
         ]);
         //return response()->json(['teste' => $id]);
     }
